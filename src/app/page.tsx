@@ -31,47 +31,69 @@ import profile from "../../public/profile.jpg"; // assume you have a profile pic
 import { answerQuery } from "../utils/answerQuery";
 
 // ---------- Profile data (single source of truth) ----------
-const PROFILE = {
-  name: "Mohamed",
-  title: "Frontend / React Native Developer & IT Support Specialist",
+export const PROFILE = {
+  name: "Mohamed Khider",
+  title: "Frontend Developer",
   location: "Dubai, UAE",
+
   summary:
-    "Frontend developer with 4+ years experience building mobile & web apps using React, Expo, TypeScript, and integrating .NET backends. Strong IT support background and fluent Arabic — improving English to B2/C1.",
+    "Frontend Developer with 3+ years of hands-on experience building modern, scalable, and high-performing web and mobile applications. Highly skilled in React.js, Next.js, React Native (Expo), and Angular, with a strong focus on clean architecture, elegant UI/UX, and responsive design. Experienced in integrating complex APIs using Node.js and .NET Core, optimizing performance, and delivering pixel-perfect interfaces. Proven track record improving application speed, stability, and user engagement across multiple production projects. Currently seeking a front-end role where I can contribute to modern product teams, elevate user experiences, and deliver fast, maintainable, and impactful digital solutions.",
+
   skills: [
-    "React",
-    "React Native (Expo)",
-    "TypeScript",
+    "React.js",
     "Next.js",
-    "Tailwind",
-    "Redux",
-    ".NET API",
-    "Secure Auth",
+    "React Native (Expo)",
+    "Angular",
+    "TypeScript",
+    "JavaScript (ES6+)",
+    "Tailwind CSS",
+    "Chakra UI",
+    "Redux Toolkit",
+    "React Query",
+    "Node.js",
+    ".NET Core APIs",
+    "REST API Integration",
+    "Responsive Design",
+    "Clean Architecture",
+    "UI/UX Best Practices",
+    "Performance Optimization",
+    "Docker",
     "CI/CD",
-    "NFC (DESFire EV1)",
+    "Git & GitHub"
   ],
+
   projects: [
     {
-      title: "Zajel - E-Commerce",
+      title: "Zajel – Full E-Commerce Platform",
       summary:
-        "React web + Flutter mobile + .NET backend. Led frontend architecture and documentation.",
+        "A complete multi-platform system (React web + Flutter mobile + .NET backend). Led the frontend architecture, documentation, and UI/UX flow for store, delivery, and admin panels."
     },
     {
-      title: "Delivery App (Expo)",
+      title: "Delivery App (Expo React Native)",
       summary:
-        "Production-ready mobile app with secure auth and real-time maps.",
+        "Production-ready app with secure authentication, real-time map tracking, custom components, and smooth UX. Includes backend integration with .NET and optimized mobile performance."
     },
     {
-      title: "NFC Wallet Prototype",
-      summary: "Prototype for MIFARE DESFire EV1 wallet system.",
+      title: "Estasher Dashboard (Next.js)",
+      summary:
+        "Built and deployed a fully responsive dashboard integrated with .NET APIs, using SSR/ISR for performance and pixel-perfect UI based on Figma designs."
     },
+    {
+      title: "Patrol – Cross-Platform App (Expo)",
+      summary:
+        "Developed iOS/Android/Web app using Expo, integrating .NET APIs and implementing animations, gestures, and modular component architecture."
+    }
   ],
+
   contacts: {
-    email: "your.email@example.com",
-    phone: "+971-5X-XXX-XXXX",
-    github: "https://github.com/yourusername",
-    linkedin: "https://www.linkedin.com/in/yourprofile",
-  },
+    email: "M38.hassan@gmail.com",
+    phone: "+971-50-129-0135",
+    github: "https://github.com/mohamed-khider",
+    linkedin: "https://www.linkedin.com/in/mohamed-hassan-214a87333",
+    portfolio: "https://mohamed-khider.github.io"
+  }
 };
+
 
 // ---------- Lightweight retrieval-based "AI" assistant ----------
 // This assistant searches the PROFILE object and returns short answers with highlights.
