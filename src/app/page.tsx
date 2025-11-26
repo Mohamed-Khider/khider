@@ -168,8 +168,8 @@ function AnimatedSphere() {
 
 function Hero3D() {
   return (
-    <div className="w-full h-96 rounded-2xl overflow-visible bg-gradient-to-br from-slate-900 to-slate-800">
-      <Canvas camera={{ position: [0, 0, 6], fov: 50 }}>
+    <div className="w-full h-96 rounded-2xl overflow-hidden bg-linear-to-br from-slate-900 to-slate-800">
+      <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 5, 5]} intensity={1} />
         <Suspense fallback={null}>
@@ -282,7 +282,7 @@ export default function App() {
         <main className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
           <section className="lg:col-span-2 space-y-6">
             <div className="rounded-2xl p-6 bg-white/5 border border-white/6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              <div className="flex md:grid-cols-2 gap-6 items-center">
                 <div>
                   <h2 className="text-2xl font-semibold">About</h2>
                   <p className="text-slate-300 mt-2">{PROFILE.summary}</p>
@@ -297,9 +297,7 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-                <div>
-                  <Hero3D />
-                </div>
+         
               </div>
             </div>
 
@@ -329,7 +327,10 @@ export default function App() {
             </div>
           </section>
 
-          <aside className="rounded-2xl p-6 bg-white/5 border border-white/6">
+          <aside className="rounded-2xl  flex flex-col p-6 gap-5 bg-white/5 border border-white/6">
+                 <div>
+                  <Hero3D />
+                </div>
             <h3 className="text-lg font-semibold">Contact</h3>
             <div className="mt-3 text-slate-300 text-sm">
               <div className="flex items-center gap-2">
