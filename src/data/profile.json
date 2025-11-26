@@ -1,0 +1,60 @@
+{
+  "summary": "Detail-oriented Frontend Developer with 3+ years of experience building responsive, scalable, and high-performance web and mobile applications. Skilled in React.js, Next.js, React Native (Expo), and Angular. Strong background in UI/UX best practices, clean architecture, and backend integration with .NET and Node.js. Improved performance across multiple apps and delivered user-first digital experiences.",
+  "skills": [
+    "React.js",
+    "Next.js",
+    "React Native (Expo)",
+    "Angular",
+    "JavaScript (ES6+)",
+    "TypeScript",
+    "HTML5",
+    "CSS3",
+    "Tailwind CSS",
+    "Chakra UI",
+    "Figma",
+    "Adobe XD",
+    "Responsive Design",
+    "Accessibility (WCAG)",
+    "Redux Toolkit",
+    "Context API",
+    "React Query",
+    "Performance Optimization",
+    "Lazy Loading",
+    "Code Splitting",
+    "React.memo",
+    "Image Optimization",
+    "Node.js",
+    ".NET Core",
+    "REST APIs",
+    "Firebase",
+    "PostgreSQL",
+    "MySQL",
+    "MongoDB",
+    "Git",
+    "GitHub",
+    "Docker",
+    "Webpack",
+    "Babel",
+    "CI/CD",
+    "Jest",
+    "Expo CLI"
+  ],
+  "projects": [
+    {
+      "title": "BetrBeta – Frontend Developer",
+      "summary": "Contributed to scalable open-source projects using React and Next.js. Improved UI responsiveness, built reusable components, and implemented SSR/ISR performance optimizations."
+    },
+    {
+      "title": "Estasher – Admin Dashboard (Next.js)",
+      "summary": "Developed and launched a responsive, accessible admin dashboard integrated with .NET backend APIs. Delivered pixel-perfect UI from Figma designs."
+    },
+    {
+      "title": "Patrol – Cross-Platform App (Expo / React Native)",
+      "summary": "Built a cross-platform mobile app for iOS, Android, and Web. Integrated .NET backend APIs, implemented Reanimated animations, and optimized mobile UX."
+    },
+    {
+      "title": "Bashaer – Fuel Ordering App (Flutter)",
+      "summary": "Developed a smooth mobile experience for product ordering using Flutter and Dart. Collaborated with backend teams using Node.js and .NET Core APIs."
+    }
+  ]
+}

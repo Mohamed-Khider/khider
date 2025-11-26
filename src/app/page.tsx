@@ -29,6 +29,7 @@ import InterviewSimulator from "./InterviewSimulator"; // assume you placed earl
 import { FileText, Github, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import profile from "../../public/profile.jpg"; // assume you have a profile picture in assets folder
 import { answerQuery } from "../utils/answerQuery";
+import  profilejson  from "../data/profile.json";
 
 // ---------- Profile data (single source of truth) ----------
 export const PROFILE = {
@@ -116,7 +117,7 @@ function AIAssistant() {
           className="flex-1 p-2 rounded-md bg-white/6"
         />
         <button
-          onClick={() => answerQuery(query, setAnswer, setSource, PROFILE)}
+          onClick={() => answerQuery(query, setAnswer, setSource, profilejson)}
           className="px-4 py-2 hover:cursor-pointer rounded-md bg-indigo-600"
         >
           Ask
