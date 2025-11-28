@@ -186,7 +186,7 @@ function Hero3D() {
             </mesh>
           </Float>
         </Suspense>
-        <OrbitControls autoRotate autoRotateSpeed={0.3} enableZoom={false} />
+        <OrbitControls autoRotate autoRotateSpeed={0.1} enableZoom={true} />
       </Canvas>
     </div>
   );
@@ -329,9 +329,10 @@ export default function App() {
 
           <aside className="rounded-2xl  flex flex-col p-6 gap-5 bg-white/5 border border-white/6">
                  <div>
+                  <h3 className="mb-2 text-lg font-semibold">ZOOM ME AND ROTAUT</h3>
                   <Hero3D />
                 </div>
-            <h3 className="text-lg font-semibold">Contact</h3>
+            
             <div className="mt-3 text-slate-300 text-sm">
               <div className="flex items-center gap-2">
                 <Phone size={14} /> {PROFILE.contacts.phone}
