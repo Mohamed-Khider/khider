@@ -133,6 +133,8 @@ export const PROFILE = {
     phone: "+971-50-129-0135",
     github: "https://github.com/mohamed-khider",
     linkedin: "https://www.linkedin.com/in/mohamed-hassan-214a87333",
-    portfolio: "https://mohamed-khider.github.io"
+    portfolio: "https://mohamed-khider.github.io",
+    // Replace with your Google Drive direct download link (or public share URL)
+    cvUrl: "https://drive.google.com/uc?export=download&id=YOUR_DRIVE_FILE_ID"
   }
 };

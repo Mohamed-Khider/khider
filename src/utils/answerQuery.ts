@@ -1,8 +1,3 @@
-
-
-import * as use from "@tensorflow-models/universal-sentence-encoder";
-import "@tensorflow/tfjs"; // required to load model
-
 /**
  * Type of your profile object
  */
@@ -15,15 +10,36 @@ export interface ProfileType {
 /**
  * Global model + embeddings cache (loaded once)
  */
-let model: use.UniversalSentenceEncoder | null = null;
+let model: any = null;
 let docEmbeddings: number[][] = [];
 let DOCUMENTS: { text: string; source: string }[] = [];
+const CUSTOM_DOCS_KEY = "profile_custom_docs_v1";
+
+function loadCustomDocsFromStorage() {
+  try {
+    const raw = typeof window !== 'undefined' ? window.localStorage.getItem(CUSTOM_DOCS_KEY) : null;
+    if (!raw) return [];
+    return JSON.parse(raw) as { text: string; source: string }[];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveCustomDocsToStorage(docs: { text: string; source: string }[]) {
+  try {
+    if (typeof window !== 'undefined') window.localStorage.setItem(CUSTOM_DOCS_KEY, JSON.stringify(docs));
+  } catch (e) {}
+}
 
 /**
- * Load TensorFlow model & embed portfolio on first run
+ * Load TensorFlow model & embed portfolio on first run (lazy-imports heavy libs)
  */
 export async function initAIAssistant(PROFILE: ProfileType) {
   if (model) return; // already loaded
+
+  // Lazy-load heavy TF libraries in the browser at runtime
+  const use = await import("@tensorflow-models/universal-sentence-encoder");
+  await import("@tensorflow/tfjs");
 
   model = await use.load();
 
@@ -35,12 +51,40 @@ export async function initAIAssistant(PROFILE: ProfileType) {
       text: p.summary,
       source: `Project • ${p.title}`,
     })),
+    // include any custom user-added docs stored in localStorage
+    ...loadCustomDocsFromStorage(),
   ];
 
   // Embed all portfolio chunks
   const texts = DOCUMENTS.map((d) => d.text);
   const embTensor = await model.embed(texts);
   docEmbeddings = await embTensor.array();
+}
+
+/**
+ * Allow adding custom short docs (user feedback) to the assistant knowledge.
+ * Saves to localStorage and updates DOCUMENTS array. If model is loaded, also
+ * computes and appends the embedding so it's available immediately.
+ */
+export async function addCustomDoc(doc: { text: string; source: string }) {
+  try {
+    const token = typeof window !== 'undefined' ? window.localStorage.getItem('ADMIN_TOKEN') : null;
+    const headers: any = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch('/api/docs', { method: 'POST', headers, body: JSON.stringify(doc) });
+    const data = await res.json();
+    // also save locally for offline
+    const existing = loadCustomDocsFromStorage();
+    existing.push({ text: doc.text, source: doc.source });
+    saveCustomDocsToStorage(existing);
+    return data;
+  } catch (e) {
+    // fallback to local save
+    const existing = loadCustomDocsFromStorage();
+    existing.push(doc);
+    saveCustomDocsToStorage(existing);
+    return doc;
+  }
 }
 
 /**
@@ -67,93 +111,39 @@ export async function answerQuery(
   setSource: (t: string) => void,
   PROFILE: ProfileType
 ) {
-  await initAIAssistant(PROFILE); // load model if needed
+  // Use server-side assistant API for reliable, lightweight responses
+  try {
+    const res = await fetch('/api/assistant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q }),
+    });
+    const data = await res.json();
+    if (data && data.answer) {
+      setAnswer(data.answer);
+      setSource(data.source || 'Server');
+      return;
+    }
+  } catch (e) {
+    // fall through to client heuristics
+  }
 
+  // Simple client-side fallback heuristics
   const qn = q.trim().toLowerCase();
   if (!qn) {
-    setAnswer("Ask me anything about my skills, experience, or projects.");
-    setSource("");
+    setAnswer('Ask me anything about my skills, experience, or projects.');
+    setSource('');
     return;
   }
 
-  /**
-   * ─────────────────────────────────────────────
-   *  PHASE 1 — HEURISTIC SHORTCUTS (FAST)
-   * ─────────────────────────────────────────────
-   */
-  if (qn.includes("react") && !qn.includes("native")) {
+  if (qn.includes('react') && !qn.includes('native')) {
     setAnswer(
-      PROFILE.summary +
-        " I work heavily with React, TypeScript, clean components, and UI architecture."
+      PROFILE.summary + ' I work heavily with React, TypeScript, clean components, and UI architecture.'
     );
-    setSource("Summary • Skills");
+    setSource('Summary • Skills');
     return;
   }
 
-  if (
-    qn.includes("react native") ||
-    qn.includes("expo") ||
-    qn.includes("mobile")
-  ) {
-    setAnswer(
-      "I build advanced mobile apps with Expo + React Native, using Expo Router, secure storage for tokens, dependency injection, and smooth animations with Reanimated."
-    );
-    setSource("Projects • Skills");
-    return;
-  }
-
-  if (qn.includes("authentication") || qn.includes("token")) {
-    setAnswer(
-      "I implement full authentication flows using secure refresh tokens, secure storage, .NET backend validation, and clean architecture patterns."
-    );
-    setSource("Experience • Projects");
-    return;
-  }
-
-  if (qn.includes("nfc") || qn.includes("desfire")) {
-    setAnswer(
-      "I have hands-on experience building a custom NFC wallet system using MIFARE DESFire EV1, including authentication, secure keys, top-up logic, and balance checks."
-    );
-    setSource("Projects");
-    return;
-  }
-
-  /**
-   * ─────────────────────────────────────────────
-   *  PHASE 2 — SEMANTIC SEARCH (TensorFlow.js)
-   * ─────────────────────────────────────────────
-   */
-  if (!model) {
-    setAnswer("AI model still loading, please try again.");
-    setSource("");
-    return;
-  }
-
-  // Embed the question
-  const qEmbTensor = await model.embed([q]);
-  const qEmb = (await qEmbTensor.array())[0];
-
-  // Compute similarity with all profile docs
-  const scores = docEmbeddings.map((emb, i) => ({
-    i,
-    score: cosine(qEmb, emb),
-  }));
-
-  // Sort best to worst
-  scores.sort((a, b) => b.score - a.score);
-
-  const best = scores[0];
-  const match = DOCUMENTS[best.i];
-
-  // Threshold to avoid irrelevant answers
-  if (best.score < 0.45) {
-    setAnswer(
-      "I couldn't find a perfect match. Try asking about my skills, mobile work, authentication, Expo, or NFC projects."
-    );
-    setSource("");
-    return;
-  }
-
-  setAnswer(match.text);
-  setSource(match.source);
+  setAnswer(PROFILE.summary);
+  setSource('Summary');
 }

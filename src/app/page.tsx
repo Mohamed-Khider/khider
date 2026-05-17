@@ -20,81 +20,21 @@
  * - The AI assistant here is offline and deterministic: it searches the profile text for relevant answers and returns highlighted snippets. You can later connect it to an LLM or vector DB for richer answers.
  */
 
-import React, { Suspense, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Text, Float, Html, useGLTF } from "@react-three/drei";
+import React, { Suspense, useMemo, useRef, useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import { Container, Avatar, Typography, Button, Grid, Card, CardContent, Chip, Stack, IconButton, Link as MuiLink } from "@mui/material";
 import { motion } from "framer-motion";
 import jsPDF from "jspdf";
-import InterviewSimulator from "./InterviewSimulator"; // assume you placed earlier component in same folder
+import InterviewSimulator from "./InterviewSimulator"; // component in same folder
+import DocsAdmin from "../components/DocsAdmin";
 import { FileText, Github, Linkedin, Mail, MapPin, Phone } from "lucide-react";
-import profile from "../../public/profile.jpg"; // assume you have a profile picture in assets folder
-import { answerQuery } from "../utils/answerQuery";
-import  profilejson  from "../data/profile.json";
+import { answerQuery, initAIAssistant, addCustomDoc } from "../utils/answerQuery";
+import { PROFILE } from "../data/PROFILE";
 
-// ---------- Profile data (single source of truth) ----------
-export const PROFILE = {
-  name: "Mohamed Khider",
-  title: "Frontend Developer",
-  location: "Dubai, UAE",
+// PROFILE is imported from src/data/PROFILE and acts as the single source of truth
 
-  summary:
-    "Frontend Developer with 3+ years of hands-on experience building modern, scalable, and high-performing web and mobile applications. Highly skilled in React.js, Next.js, React Native (Expo), and Angular, with a strong focus on clean architecture, elegant UI/UX, and responsive design. Experienced in integrating complex APIs using Node.js and .NET Core, optimizing performance, and delivering pixel-perfect interfaces. Proven track record improving application speed, stability, and user engagement across multiple production projects. Currently seeking a front-end role where I can contribute to modern product teams, elevate user experiences, and deliver fast, maintainable, and impactful digital solutions.",
 
-  skills: [
-    "React.js",
-    "Next.js",
-    "React Native (Expo)",
-    "Angular",
-    "TypeScript",
-    "JavaScript (ES6+)",
-    "Tailwind CSS",
-    "Chakra UI",
-    "Redux Toolkit",
-    "React Query",
-    "Node.js",
-    ".NET Core APIs",
-    "REST API Integration",
-    "Responsive Design",
-    "Clean Architecture",
-    "UI/UX Best Practices",
-    "Performance Optimization",
-    "Docker",
-    "CI/CD",
-    "Git & GitHub"
-  ],
-
-  projects: [
-    {
-      title: "Zajel – Full E-Commerce Platform",
-      summary:
-        "A complete multi-platform system (React web + Flutter mobile + .NET backend). Led the frontend architecture, documentation, and UI/UX flow for store, delivery, and admin panels."
-    },
-    {
-      title: "Delivery App (Expo React Native)",
-      summary:
-        "Production-ready app with secure authentication, real-time map tracking, custom components, and smooth UX. Includes backend integration with .NET and optimized mobile performance."
-    },
-    {
-      title: "Estasher Dashboard (Next.js)",
-      summary:
-        "Built and deployed a fully responsive dashboard integrated with .NET APIs, using SSR/ISR for performance and pixel-perfect UI based on Figma designs."
-    },
-    {
-      title: "Patrol – Cross-Platform App (Expo)",
-      summary:
-        "Developed iOS/Android/Web app using Expo, integrating .NET APIs and implementing animations, gestures, and modular component architecture."
-    }
-  ],
-
-  contacts: {
-    email: "M38.hassan@gmail.com",
-    phone: "+971-50-129-0135",
-    github: "https://github.com/mohamed-khider",
-    linkedin: "https://www.linkedin.com/in/mohamed-hassan-214a87333",
-    portfolio: "https://mohamed-khider.github.io"
-  }
-};
-
+const Hero3D = dynamic(() => import("../components/Hero3D"), { ssr: false, loading: () => <div style={{ height: 240 }} /> });
 
 // ---------- Lightweight retrieval-based "AI" assistant ----------
 // This assistant searches the PROFILE object and returns short answers with highlights.
@@ -102,23 +42,37 @@ function AIAssistant() {
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState("");
   const [source, setSource] = useState("");
+  const [modelLoading, setModelLoading] = useState(false);
+  const [improveText, setImproveText] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    setModelLoading(true);
+    initAIAssistant(PROFILE as any)
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) setModelLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="mt-6 p-4 rounded-xl bg-white/5 border border-white/6">
       <h3 className="text-lg font-semibold">AI Assistant</h3>
-      <p className="text-sm text-slate-300 mt-1">
-        Ask about my experience, projects, or skills. (Offline demo assistant)
-      </p>
+      <p className="text-sm text-slate-300 mt-1">Ask about my experience, projects, or skills.</p>
       <div className="mt-3 flex gap-2">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ask something like Tell me about your React experience\"
+          placeholder="Ask something like: Tell me about your React experience"
           className="flex-1 p-2 rounded-md bg-white/6"
         />
         <button
-          onClick={() => answerQuery(query, setAnswer, setSource, profilejson)}
+          onClick={() => answerQuery(query, setAnswer, setSource, PROFILE as any)}
           className="px-4 py-2 hover:cursor-pointer rounded-md bg-indigo-600"
+          disabled={!query.trim()}
         >
           Ask
         </button>
@@ -129,6 +83,37 @@ function AIAssistant() {
         {source && (
           <div className="mt-2 text-xs text-slate-400">Source: {source}</div>
         )}
+        <div className="mt-3 text-xs text-slate-400">{modelLoading ? 'Advanced assistant loading…' : 'Advanced assistant ready'}</div>
+
+        <div className="mt-3">
+          <textarea
+            placeholder="Improve or add a knowledge snippet (optional)..."
+            value={improveText}
+            onChange={(e) => setImproveText(e.target.value)}
+            className="w-full p-2 mt-2 rounded-md bg-white/6 text-sm"
+            rows={3}
+          />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={async () => {
+                if (!improveText.trim()) return;
+                await addCustomDoc({ text: improveText.trim(), source: 'User' });
+                setAnswer('Thanks — I added that to my knowledge base and will use it in future answers.');
+                setSource('User-added');
+                setImproveText('');
+              }}
+              className="px-3 py-1 rounded-md bg-green-600 text-sm"
+            >
+              Add to knowledge
+            </button>
+            <button
+              onClick={() => answerQuery(query, setAnswer, setSource, PROFILE as any)}
+              className="px-3 py-1 rounded-md bg-sky-600 text-sm"
+            >
+              Refine answer
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -136,61 +121,7 @@ function AIAssistant() {
 
 // ---------- 3D Hero ----------
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function FloatingCard({ children }: any) {
-  return (
-    <Float floatIntensity={1} rotationIntensity={0.4}>
-      <mesh>
-        <Html center>{children}</Html>
-      </mesh>
-    </Float>
-  );
-}
-
-function AnimatedSphere() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ref = useRef<any>(null);
-  useFrame((state, delta) => {
-    if (ref.current) ref.current.rotation.y += delta * 0.2;
-  });
-  return (
-    <mesh ref={ref} position={[0, 0, 0]}>
-      <sphereGeometry args={[1.2, 64, 64]} />
-      <meshStandardMaterial
-        metalness={0.8}
-        roughness={0.2}
-        color={`#60a5fa`}
-        transparent
-        opacity={0.9}
-      />
-    </mesh>
-  );
-}
-
-function Hero3D() {
-  return (
-    <div className="w-full h-96 rounded-2xl overflow-hidden bg-linear-to-br from-slate-900 to-slate-800">
-      <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 5, 5]} intensity={1} />
-        <Suspense fallback={null}>
-          <AnimatedSphere />
-          <Float rotationIntensity={0.6} speed={2} floatIntensity={1}>
-            <mesh position={[2, 0.6, 0]} scale={[0.8, 0.8, 0.8]}>
-              <boxGeometry args={[1.4, 0.9, 0.2]} />
-              <meshStandardMaterial
-                color={`#34d399`}
-                metalness={0.4}
-                roughness={0.3}
-                opacity={0.3}
-              />
-            </mesh>
-          </Float>
-        </Suspense>
-        <OrbitControls autoRotate autoRotateSpeed={0.1} enableZoom={true} />
-      </Canvas>
-    </div>
-  );
-}
+// (Hero3D loaded dynamically above to keep heavy three.js code out of the main bundle)
 
 // ---------- Utility: PDF export for resume snapshot ----------
 function exportResumePDF() {
@@ -217,7 +148,7 @@ export default function App() {
       <div className="max-w-6xl mx-auto">
         <header className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
           <img
-            src={profile.src}
+            src="/profile.jpg"
             alt="avatar"
             className="w-32 h-32 rounded-2xl object-cover border-2 border-white/10 shadow-lg"
           />
@@ -260,22 +191,28 @@ export default function App() {
               </a>
             </div>
 
-            <div className="mt-4 flex gap-3">
-              <button
-                onClick={() => exportResumePDF()}
-                className="px-4 py-2 rounded-md bg-indigo-600"
-              >
-                Download resume
-              </button>
-
-              <a
-                href={`mailto:${PROFILE.contacts.email}?subject=Job%20Opportunity`}
-                className="inline-flex items-center gap-2 border border-white/10 px-4 py-2 rounded-lg"
-              >
-                <Mail size={16} />
-                <span>Contact</span>
-              </a>
-            </div>
+            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+              {PROFILE.contacts?.cvUrl ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<FileText size={16} />}
+                  component="a"
+                  href={PROFILE.contacts.cvUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Download resume
+                </Button>
+              ) : (
+                <Button variant="contained" color="primary" startIcon={<FileText size={16} />} onClick={() => exportResumePDF()}>
+                  Download resume
+                </Button>
+              )}
+              <Button variant="outlined" color="inherit" startIcon={<Mail size={16} />} href={`mailto:${PROFILE.contacts.email}?subject=Job%20Opportunity`}>
+                Contact
+              </Button>
+            </Stack>
           </div>
         </header>
 
@@ -286,16 +223,11 @@ export default function App() {
                 <div>
                   <h2 className="text-2xl font-semibold">About</h2>
                   <p className="text-slate-300 mt-2">{PROFILE.summary}</p>
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    {skills.slice(0, 6).map((s) => (
-                      <div
-                        key={s}
-                        className="text-sm p-2 rounded-md bg-white/6"
-                      >
-                        {s}
-                      </div>
+                  <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap' }}>
+                    {skills.slice(0, 12).map((s) => (
+                      <Chip key={s} label={s} variant="outlined" sx={{ mr: 1, mb: 1 }} />
                     ))}
-                  </div>
+                  </Stack>
                 </div>
          
               </div>
@@ -303,16 +235,18 @@ export default function App() {
 
             <div className="rounded-2xl p-6 bg-white/5 border border-white/6">
               <h3 className="text-xl font-semibold">Featured Projects</h3>
-              <div className="mt-4 space-y-4">
+              <Grid container spacing={2} sx={{ mt: 1 }}>
                 {projects.map((p) => (
-                  <div key={p.title} className="p-4 rounded-md bg-white/6">
-                    <div className="font-medium">{p.title}</div>
-                    <div className="text-slate-300 text-sm mt-1">
-                      {p.summary}
-                    </div>
-                  </div>
+                  <Grid item xs={12} md={6} key={p.title}>
+                    <Card variant="outlined" sx={{ bgcolor: 'transparent', borderColor: 'rgba(255,255,255,0.06)' }}>
+                      <CardContent>
+                        <Typography variant="subtitle1" fontWeight={600}>{p.title}</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{p.summary}</Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
                 ))}
-              </div>
+              </Grid>
             </div>
 
             <div className="rounded-2xl p-6 bg-white/5 border border-white/6">
@@ -327,10 +261,10 @@ export default function App() {
             </div>
           </section>
 
-          <aside className="rounded-2xl  flex flex-col p-6 gap-5 bg-white/5 border border-white/6">
+            <aside className="rounded-2xl  flex flex-col p-6 gap-5 bg-white/5 border border-white/6">
                  <div>
                   <h3 className="mb-2 text-lg font-semibold">ZOOM ME AND ROTAUT</h3>
-                  <Hero3D />
+              <Hero3D />
                 </div>
             
             <div className="mt-3 text-slate-300 text-sm">
@@ -358,6 +292,11 @@ export default function App() {
                 <div className="text-slate-300 text-sm">
                   Full-time in Dubai — Ready to join immediately. Transferable
                 </div>
+              </div>
+              
+              <div className="mt-6">
+                <h4 className="font-medium">Knowledge Admin</h4>
+                <DocsAdmin />
               </div>
             </div>
           </aside>
